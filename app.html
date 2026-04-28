@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Phantom dApp - مرحباً</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 40px;
+            padding: 35px 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            background: linear-gradient(135deg, #fff, #c084fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+        }
+        .info-card {
+            background: rgba(0,0,0,0.4);
+            border-radius: 28px;
+            padding: 25px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #1e1a3b;
+            padding: 8px 20px;
+            border-radius: 40px;
+            margin-bottom: 15px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .dot.green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .dot.red { background: #ef4444; }
+        .address {
+            background: #0b0a1a;
+            padding: 12px;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #cbd5ff;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px dashed #3b3670;
+            color: #e0d9ff;
+        }
+        .balance {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #14F195;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(95deg, #9945FF, #14F195);
+            border: none;
+            border-radius: 60px;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 15px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.7rem;
+            color: #7c7fba;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🦄 Phantom dApp</h1>
+
+    <div class="info-card">
+        <div class="status">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">جاري التحقق...</span>
+        </div>
+        <div id="addressArea" style="display:none;">
+            <div class="address" id="addressDisplay"></div>
+        </div>
+    </div>
+
+    <div class="info-row">
+        <span>🌐 الشبكة</span>
+        <span id="networkName">Solana</span>
+    </div>
+    <div class="info-row">
+        <span>💰 رصيد SOL</span>
+        <span class="balance" id="balanceDisplay">0.00 SOL</span>
+    </div>
+    <div class="info-row">
+        <span>📱 الحالة</span>
+        <span id="messageDisplay">✋ جاهز للاتصال</span>
+    </div>
+
+    <button id="connectBtn">🔗 الضغط للاتصال</button>
+
+    <footer>
+        متصل بمحفظة Phantom بشكل آمن
+    </footer>
+</div>
+
+<script>
+    const connectBtn = document.getElementById('connectBtn');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const addressArea = document.getElementById('addressArea');
+    const addressDisplay = document.getElementById('addressDisplay');
+    const balanceDisplay = document.getElementById('balanceDisplay');
+    const messageDisplay = document.getElementById('messageDisplay');
+
+    function shortenAddress(addr) {
+        if (!addr) return '';
+        return addr.slice(0, 6) + '...' + addr.slice(-4);
+    }
+
+    async function getBalance(address) {
+        try {
+            const res = await fetch('https://api.mainnet-beta.solana.com', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: 1,
+                    method: 'getBalance',
+                    params: [address]
+                })
+            });
+            const data = await res.json();
+            if (data.result) {
+                const sol = data.result.value / 1e9;
+                balanceDisplay.innerHTML = `${sol.toFixed(5)} SOL`;
+                return;
+            }
+        } catch(e) {}
+        balanceDisplay.innerHTML = '? SOL';
+    }
+
+    async function connectWallet() {
+        messageDisplay.innerHTML = '⏳ جاري الاتصال...';
+        statusDot.className = 'dot';
+        statusText.innerHTML = 'جاري...';
+        
+        // محاولة الحصول على Phantom
+        const phantom = window.solana || (window.phantom?.solana);
+        
+        if (!phantom || !phantom.isPhantom) {
+            messageDisplay.innerHTML = '❌ يرجى فتح هذه الصفحة من داخل تطبيق Phantom';
+            statusText.innerHTML = 'خطأ';
+            statusDot.className = 'dot red';
+            return;
+        }
+        
+        try {
+            const response = await phantom.connect();
+            const address = response.publicKey.toString();
+            
+            statusDot.className = 'dot green';
+            statusText.innerHTML = '✅ متصل';
+            addressArea.style.display = 'block';
+            addressDisplay.innerHTML = shortenAddress(address);
+            messageDisplay.innerHTML = 'تم الاتصال بنجاح';
+            getBalance(address);
+            
+        } catch(err) {
+            console.log(err);
+            messageDisplay.innerHTML = '❌ فشل الاتصال: ' + (err.message || 'غير معروف');
+            statusDot.className = 'dot red';
+            statusText.innerHTML = 'فشل';
+        }
+    }
+    
+    connectBtn.addEventListener('click', connectWallet);
+    
+    // فحص أولي
+    if (window.solana?.isPhantom && window.solana.isConnected) {
+        connectWallet();
+    }
+</script>
+</body>
+</html>
