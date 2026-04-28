@@ -118,6 +118,48 @@ export function useSolanaWallet() {
     };
   }, []);
 
+  // 🔧 FIX 1: Listen for page visibility change (when returning from wallet app)
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[WALLET] 📱 Returned from wallet app, re-verifying session...');
+        
+        // Small delay to ensure wallet app has time to respond
+        setTimeout(async () => {
+          // For mobile, check if we have a stored key but state says not connected
+          const storedKey = localStorage.getItem(STORAGE_KEY);
+          if (storedKey && storedKey !== 'null' && storedKey.length > 30 && !connected) {
+            console.log('[WALLET] ✅ Restoring session after return:', storedKey);
+            setPublicKey(storedKey);
+            setConnected(true);
+          }
+          
+          // Also try to verify with the wallet if possible
+          if (window.solana?.isPhantom && !connected) {
+            try {
+              const resp = await window.solana.connect({ onlyIfTrusted: true });
+              if (resp?.publicKey) {
+                const key = resp.publicKey.toString();
+                console.log('[WALLET] ✅ Verified session after return:', key);
+                setPublicKey(key);
+                setConnected(true);
+                localStorage.setItem(STORAGE_KEY, key);
+              }
+            } catch (e) {
+              console.log('[WALLET] No trusted session found after return');
+            }
+          }
+        }, 500);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [connected]);
+
   // Quick session verification (non-polling)
   const verifySession = useCallback(async () => {
     if (!window.solana?.isPhantom) return false;
@@ -176,6 +218,11 @@ export function useSolanaWallet() {
         console.log("[WALLET] ✅ MOBILE AUTHORIZED:", publicKeyStr);
 
         persistKey(publicKeyStr);
+        
+        // 🔧 FIX 2: Force connected state to update immediately
+        setConnected(true);
+        setPublicKey(publicKeyStr);
+        console.log('[WALLET] ✅ State updated immediately after mobile connect');
       });
     } catch (err) {
       console.error("[WALLET] Mobile error:", err);
