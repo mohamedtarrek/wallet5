@@ -1,138 +1,3 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر الدفع عبر Phantom | Solana Pay</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            direction: rtl;
-        }
-
-        .container {
-            max-width: 600px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(12px);
-            border-radius: 48px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        h1 {
-            text-align: center;
-            color: white;
-            margin-bottom: 10px;
-        }
-
-        .sub {
-            text-align: center;
-            color: #a78bfa;
-            margin-bottom: 30px;
-        }
-
-        .wallet-card {
-            background: rgba(0,0,0,0.4);
-            border-radius: 32px;
-            padding: 20px;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #1e1a3b;
-            padding: 6px 16px;
-            border-radius: 40px;
-            margin-bottom: 15px;
-            color: white;
-        }
-
-        .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .dot.red { background: #ef4444; }
-        .dot.green { background: #10b981; }
-
-        .address-box {
-            background: #0b0a1a;
-            padding: 12px;
-            border-radius: 20px;
-            font-family: monospace;
-            color: #cbd5ff;
-            word-break: break-all;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 60px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .btn-primary { background: linear-gradient(95deg, #9945FF, #14F195); color: white; }
-        .btn-outline { background: transparent; border: 1px solid #a78bfa; color: white; }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            color: white;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="container">
-    <h1>🦄 متجر SOL</h1>
-    <div class="sub">ادفع باستخدام محفظة Phantom</div>
-
-    <div class="wallet-card">
-        <div class="status-badge">
-            <span class="dot red" id="statusDot"></span>
-            <span id="statusText">غير متصل</span>
-        </div>
-
-        <div id="walletInfo" style="display:none;">
-            <div class="address-box" id="walletAddress"></div>
-        </div>
-    </div>
-
-    <div class="info-row">
-        <span>السعر</span>
-        <span>0.05 SOL</span>
-    </div>
-
-    <input id="email" placeholder="البريد الإلكتروني"
-           style="width:100%;padding:12px;border-radius:20px;margin-top:10px;border:none;">
-
-    <button class="btn btn-primary" id="payBtn" disabled>💸 دفع</button>
-    <button class="btn btn-outline" id="connectBtn">🔗 ربط المحفظة</button>
-</div>
-
-<script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.js"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -162,25 +27,59 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // 🔥 1. Phantom Desktop connect
+    async function connectDesktop() {
+        provider = window.solana;
+
+        const res = await provider.connect();
+        wallet = res.publicKey.toString();
+
+        updateUI(true, wallet);
+    }
+
+    // 🔥 2. Phantom Mobile Deep Link
+    function connectMobilePhantom() {
+
+        const dappUrl = encodeURIComponent(window.location.href);
+
+        // Phantom Mobile Deep Link (official pattern)
+        const link = `https://phantom.app/ul/v1/connect?app_url=${dappUrl}&redirect_link=${dappUrl}`;
+
+        window.location.href = link;
+    }
+
+    // 🔥 3. Smart Connect (Auto detect)
     async function connectWallet() {
         try {
-            if (!window.solana || !window.solana.isPhantom) {
-                alert("قم بتثبيت Phantom أولاً");
-                return;
+
+            // Case 1: Desktop Phantom
+            if (window.solana?.isPhantom) {
+                return await connectDesktop();
             }
 
-            provider = window.solana;
-            const res = await provider.connect();
-            wallet = res.publicKey.toString();
+            // Case 2: Wallet Standard (future proof)
+            if (window.navigator?.wallets) {
+                const wallets = await window.navigator.wallets.request({
+                    method: "wallet_standard:connect"
+                });
 
-            updateUI(true, wallet);
+                if (wallets?.length) {
+                    wallet = wallets[0].publicKey.toString();
+                    updateUI(true, wallet);
+                    return;
+                }
+            }
+
+            // Case 3: Mobile fallback → Deep Link
+            connectMobilePhantom();
 
         } catch (e) {
-            alert("فشل الاتصال");
             console.log(e);
+            alert("فشل الاتصال بالمحفظة");
         }
     }
 
+    // 🔥 الدفع
     async function pay() {
         if (!provider || !wallet) return alert("اربط المحفظة أولاً");
 
@@ -202,6 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
         tx.feePayer = new solanaWeb3.PublicKey(wallet);
 
         const signed = await provider.signAndSendTransaction(tx);
+
         alert("تم الدفع: " + signed.signature);
     }
 
@@ -211,6 +111,3 @@ document.addEventListener("DOMContentLoaded", () => {
     updateUI(false);
 });
 </script>
-
-</body>
-</html>
