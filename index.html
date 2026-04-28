@@ -2,16 +2,19 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Phantom - افتح المحفظة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر الدفع عبر Phantom | Solana Pay</title>
+    <!-- خطوط وتصميم عصري -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Cairo', sans-serif;
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             min-height: 100vh;
             display: flex;
@@ -20,130 +23,347 @@
             padding: 20px;
             direction: rtl;
         }
+
         .container {
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.07);
             backdrop-filter: blur(12px);
-            border-radius: 40px;
-            padding: 40px 25px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 48px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3);
         }
+
         h1 {
-            font-size: 2.2rem;
+            font-size: 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, #fff, #c084fc, #a78bfa);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .sub {
+            text-align: center;
+            color: #a78bfa;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        /* بطاقة المحفظة */
+        .wallet-card {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 32px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1e1a3b;
+            padding: 6px 16px;
+            border-radius: 40px;
             margin-bottom: 15px;
         }
-        .phantom-icon {
-            font-size: 80px;
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .dot.red { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+        .dot.green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+
+        .address-box {
+            background: #0b0a1a;
+            padding: 12px;
+            border-radius: 28px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #cbd5ff;
+            word-break: break-all;
+            border: 1px solid #2d2a5e;
+            margin-top: 10px;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #a78bfa;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        /* نموذج الدفع */
+        .payment-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 28px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .input-group {
             margin-bottom: 20px;
         }
-        p {
-            color: #cad2ff;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        .btn {
+        .input-group label {
             display: block;
+            color: #cad2ff;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .input-group input {
             width: 100%;
-            padding: 16px;
-            margin: 15px 0;
+            padding: 14px;
+            background: #0b0a1a;
+            border: 1px solid #3b3670;
+            border-radius: 28px;
+            color: white;
+            font-size: 1rem;
+            font-family: monospace;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
             border: none;
             border-radius: 60px;
-            font-size: 1.1rem;
             font-weight: bold;
-            font-family: inherit;
+            font-size: 1rem;
             cursor: pointer;
-            text-decoration: none;
-            text-align: center;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        .btn-primary {
-            background: linear-gradient(95deg, #9945FF, #14F195);
-            color: white;
+        .btn-primary { background: linear-gradient(95deg, #9945FF, #14F195); color: white; }
+        .btn-outline { background: transparent; border: 1.5px solid #a78bfa; color: #e0d9ff; }
+        .btn-primary:active { transform: scale(0.97); }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed #3b3670;
         }
-        .btn-secondary {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        .steps {
-            background: rgba(0,0,0,0.3);
-            border-radius: 24px;
-            padding: 20px;
-            margin-top: 25px;
-            text-align: right;
-        }
-        .steps h3 {
-            color: #c084fc;
-            margin-bottom: 15px;
-        }
-        .steps li {
-            color: #cad2ff;
-            margin: 10px 0;
-            margin-right: 20px;
-        }
+
         footer {
-            margin-top: 25px;
+            text-align: center;
+            margin-top: 20px;
             font-size: 0.7rem;
             color: #7c7fba;
         }
-        .note {
-            background: #9945FF20;
-            padding: 12px;
-            border-radius: 20px;
-            margin-top: 20px;
-            font-size: 0.85rem;
-        }
+        .loading { animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="phantom-icon">🦄</div>
-    <h1 style="background: linear-gradient(135deg, #fff, #c084fc); background-clip: text; -webkit-background-clip: text; color: transparent;">Phantom</h1>
-    <p>للتفاعل مع هذا التطبيق، يرجى فتحه من داخل متصفح محفظة Phantom</p>
+    <h1>🦄 متجر SOL</h1>
+    <div class="sub">ادفع باستخدام محفظة Phantom</div>
 
-    <a href="phantom://browse?url=https://mohamedtarrek.github.io/wallet5/app.html" class="btn btn-primary" id="openPhantomBtn">
-        🚀 فتح Phantom الآن
-    </a>
-
-    <a href="https://phantom.app/" class="btn btn-secondary" id="installBtn">
-        📥 تثبيت Phantom (إذا لم يكن مثبتاً)
-    </a>
-
-    <div class="steps">
-        <h3>📱 طريقة الاستخدام الصحيحة:</h3>
-        <ul style="list-style-position: inside;">
-            <li>1. تأكد من تثبيت تطبيق Phantom</li>
-            <li>2. اضغط على الزر <strong>"فتح Phantom الآن"</strong></li>
-            <li>3. وافق على فتح التطبيق</li>
-            <li>4. ستفتح الصفحة داخل Phantom تلقائياً</li>
-        </ul>
+    <div class="wallet-card">
+        <div class="status-badge">
+            <span class="dot red" id="statusDot"></span>
+            <span id="statusText">غير متصل</span>
+        </div>
+        <div id="walletInfo" style="display: none;">
+            <div class="address-box">
+                <span id="walletAddress"></span>
+                <button class="copy-btn" id="copyBtn">📋</button>
+            </div>
+        </div>
+        <div id="installMsg" style="display: none; color: #ffccaa; margin-top: 10px;">
+            ⚠️ لم يتم العثور على محفظة Phantom. قم بتثبيت الإضافة من متجر Chrome.
+        </div>
     </div>
 
-    <div class="note">
-        💡 ملاحظة: إذا لم يعمل الزر، قم بفتح تطبيق Phantom يدوياً<br>
-        ثم اضغط على أيقونة المتصفح 🌐 وأدخل الرابط يدوياً
+    <div class="payment-section">
+        <div class="info-row">
+            <span>💎 سعر السلعة</span>
+            <span id="productPrice">0.05 SOL</span>
+        </div>
+        <div class="info-row">
+            <span>💸 العمولة</span>
+            <span>0.000005 SOL</span>
+        </div>
+        <div class="input-group">
+            <label>📧 بريدك الإلكتروني (للفاتورة)</label>
+            <input type="email" id="customerEmail" placeholder="example@domain.com">
+        </div>
+        <button class="btn btn-primary" id="payBtn" disabled>
+            <span>💸</span> إتمام الدفع
+        </button>
+        <button class="btn btn-outline" id="connectBtn">
+            🔗 ربط المحفظة
+        </button>
     </div>
-
-    <footer>
-        متوافق مع Phantom على Android و iOS
-    </footer>
+    
+    <div id="txStatus" style="text-align: center; margin-top: 15px; color: #c084fc; font-size: 0.85rem;"></div>
+    <footer>معاملات آمنة على شبكة Solana</footer>
 </div>
 
+<!-- استيراد مكتبات Solana Web3 -->
+<script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.js"></script>
+
 <script>
-    const openBtn = document.getElementById('openPhantomBtn');
-    const installBtn = document.getElementById('installBtn');
+    // --- العناصر الأساسية ---
+    let provider = null;
+    let connectedPublicKey = null;
     
-    openBtn.addEventListener('click', function(e) {
-        // محاولة فتح Phantom
-        window.location.href = 'phantom://browse?url=https://mohamedtarrek.github.io/wallet5/app.html';
+    // عنوان التاجر (استبدله بعنوان محفظتك الحقيقية)
+    const MERCHANT_WALLET = "DjDZfRk6rNpkgVMyjWjQab6dbXo5BVpLvQmzMvM7tP7u"; // عنوان وهمي - ضع عنوانك هنا
+
+    // --- تعريف دوال مساعدة ---
+    function shortenAddress(addr) {
+        if (!addr) return '';
+        return addr.slice(0, 5) + '...' + addr.slice(-4);
+    }
+
+    function updateUI(isConnected, address = null) {
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const walletInfo = document.getElementById('walletInfo');
+        const walletAddressSpan = document.getElementById('walletAddress');
+        const payBtn = document.getElementById('payBtn');
+
+        if (isConnected && address) {
+            statusDot.className = 'dot green';
+            statusText.innerText = 'متصل';
+            walletInfo.style.display = 'block';
+            walletAddressSpan.innerText = shortenAddress(address);
+            walletAddressSpan.setAttribute('data-full', address);
+            payBtn.disabled = false;
+        } else {
+            statusDot.className = 'dot red';
+            statusText.innerText = 'غير متصل';
+            walletInfo.style.display = 'none';
+            payBtn.disabled = true;
+        }
+    }
+
+    // --- دالة ربط المحفظة (خاصة بالمتصفح) ---
+    async function connectWallet() {
+        const installMsg = document.getElementById('installMsg');
         
-        // إذا لم يفتح التطبيق خلال 2 ثانية، نفتح المتجر
-        setTimeout(function() {
-            if (document.hidden === false) {
-                window.location.href = 'https://phantom.app/';
-            }
-        }, 2000);
+        // 1. التأكد من وجود Phantom في المتصفح [citation:3][citation:6]
+        if (!window.solana || !window.solana.isPhantom) {
+            installMsg.style.display = 'block';
+            alert("يرجى تثبيت محفظة Phantom أولاً\nمن متجر Chrome Web Store.");
+            window.open('https://chrome.google.com/webstore/detail/phantom/bfnaelmomeimhlpmgjnjophhpkkoljpa', '_blank');
+            return;
+        }
+
+        provider = window.solana;
+        installMsg.style.display = 'none';
+
+        try {
+            // 2. طلب الاتصال (هنا تظهر نافذة Phantom المنبثقة) [citation:1]
+            const response = await provider.connect();
+            connectedPublicKey = response.publicKey.toString();
+            updateUI(true, connectedPublicKey);
+            
+            // 3. الاستماع لتغيير الحساب (في حال قام العميل بتبديل المحفظة)
+            provider.on('accountChanged', (newPublicKey) => {
+                if (newPublicKey) {
+                    connectedPublicKey = newPublicKey.toString();
+                    updateUI(true, connectedPublicKey);
+                } else {
+                    updateUI(false);
+                    connectedPublicKey = null;
+                }
+            });
+        } catch (err) {
+            console.error(err);
+            alert("فشل الاتصال: " + err.message);
+            updateUI(false);
+        }
+    }
+
+    // --- دالة إتمام الدفع وتحويل SOL [citation:7]---
+    async function processPayment() {
+        if (!provider || !connectedPublicKey) {
+            alert("الرجاء ربط المحفظة أولاً.");
+            return;
+        }
+
+        const statusDiv = document.getElementById('txStatus');
+        const email = document.getElementById('customerEmail').value;
+        
+        // تحقق بسيط من البريد الإلكتروني
+        if (!email || !email.includes('@')) {
+            alert("الرجاء إدخال بريد إلكتروني صحيح للفاتورة.");
+            return;
+        }
+
+        // المبلغ الثابت للمنتج (0.05 SOL)
+        const amountInSOL = 0.05;
+        const lamports = amountInSOL * 1e9; // تحويل SOL إلى Lamports
+        
+        // الاتصال بشبكة Solana الأساسية (Mainnet)
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
+        
+        try {
+            statusDiv.innerHTML = '⏳ جاري تجهير المعاملة...';
+            
+            // إنشاء معاملة التحويل
+            const transaction = new solanaWeb3.Transaction();
+            
+            // إضافة تعليمة التحويل (من العميل إلى التاجر) [citation:10]
+            const instruction = solanaWeb3.SystemProgram.transfer({
+                fromPubkey: new solanaWeb3.PublicKey(connectedPublicKey),
+                toPubkey: new solanaWeb3.PublicKey(MERCHANT_WALLET),
+                lamports: lamports
+            });
+            
+            transaction.add(instruction);
+            
+            // تعيين بيانات المعاملة الأساسية
+            const blockhash = await connection.getLatestBlockhash();
+            transaction.recentBlockhash = blockhash.blockhash;
+            transaction.feePayer = new solanaWeb3.PublicKey(connectedPublicKey);
+            
+            statusDiv.innerHTML = '✍️ يرجى التوقيع على المعاملة في محفظة Phantom...';
+            
+            // طلب التوقيع والإرسال عبر Phantom [citation:3][citation:5]
+            const signed = await provider.signAndSendTransaction(transaction);
+            
+            statusDiv.innerHTML = `✅ تم الدفع بنجاح! <br> توقيع المعاملة: ${signed.signature.slice(0, 20)}...`;
+            
+            // هنا يمكنك إضافة كود لإرسال البريد الإلكتروني للمستخدم أو تحديث حالة الطلب في متجرك.
+            console.log("تم خصم المبلغ من:", connectedPublicKey);
+            console.log("إشعار الدفع سيُرسل إلى:", email);
+            
+        } catch (error) {
+            console.error(error);
+            statusDiv.innerHTML = '❌ فشل الدفع: ' + error.message;
+            alert("حدث خطأ أثناء الدفع: " + error.message);
+        }
+    }
+
+    // --- ربط الأحداث والأزرار ---
+    document.getElementById('connectBtn').addEventListener('click', connectWallet);
+    document.getElementById('payBtn').addEventListener('click', processPayment);
+    
+    // نسخ العنوان للحافظة
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        const fullAddr = document.getElementById('walletAddress').getAttribute('data-full');
+        if (fullAddr) {
+            navigator.clipboard.writeText(fullAddr);
+            alert("تم نسخ عنوان المحفظة!");
+        }
+    });
+
+    // فتح تلقائي إذا كان متصلاً مسبقاً
+    window.addEventListener('load', () => {
+        if (window.solana?.isPhantom && window.solana.isConnected) {
+            connectWallet();
+        }
     });
 </script>
 </body>
