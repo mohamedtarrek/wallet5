@@ -1,114 +1,119 @@
 import { useState, useEffect, useCallback } from "react";
 
 /**
- * Custom Phantom wallet hook - avoids wallet-adapter conflicts
- * Mobile: Uses Phantom deep link → app → redirect back
- * Desktop: Uses window.solana directly
+ * Phantom Wallet Hook (Stable Version)
+ * - يعمل على Desktop + Mobile (Chrome)
+ * - يعتمد على Wallet Standard (بدون deep link)
+ * - يحل مشكلة: Phantom يفتح ويقفل
  */
+
 export function usePhantomWallet() {
   const [publicKey, setPublicKey] = useState(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
-  // Check if Phantom is available
-  const isPhantomInstalled = typeof window !== "undefined" && window.solana?.isPhantom;
+  // 🔍 Detect mobile
+  const isMobile =
+    typeof navigator !== "undefined" &&
+    /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
-  // Detect mobile device
-  const isMobile = /android|iphone|ipad|ipod/i.test(navigator.userAgent);
-
-  // Restore connection on page load (handles redirect back)
+  // 🔥 Restore session بعد الرجوع من Phantom
   useEffect(() => {
     const checkConnection = async () => {
-      if (window.solana?.isPhantom && window.solana.isConnected) {
-        setConnected(true);
-        setPublicKey(window.solana.publicKey.toString());
-        console.log("Wallet restored:", window.solana.publicKey.toString());
+      if (window.solana?.isPhantom) {
+        try {
+          if (window.solana.isConnected) {
+            const key = window.solana.publicKey?.toString();
+            if (key) {
+              setPublicKey(key);
+              setConnected(true);
+              console.log("✅ Restored session:", key);
+            }
+          }
+        } catch (err) {
+          console.error("Restore error:", err);
+        }
       }
     };
 
     checkConnection();
   }, []);
 
-  // Listen for connection changes
+  // 🎧 Listen للأحداث
   useEffect(() => {
-    if (window.solana?.on) {
-      const handleConnect = () => {
-        setConnected(true);
-        setPublicKey(window.solana.publicKey?.toString() || null);
-      };
+    if (!window.solana) return;
 
-      const handleDisconnect = () => {
-        setConnected(false);
-        setPublicKey(null);
-      };
+    const handleConnect = () => {
+      const key = window.solana.publicKey?.toString();
+      console.log("🟢 Connected event:", key);
+      setPublicKey(key);
+      setConnected(true);
+    };
 
-      window.solana.on("connect", handleConnect);
-      window.solana.on("disconnect", handleDisconnect);
+    const handleDisconnect = () => {
+      console.log("🔴 Disconnected");
+      setPublicKey(null);
+      setConnected(false);
+    };
 
-      return () => {
-        window.solana.off("connect", handleConnect);
-        window.solana.off("disconnect", handleDisconnect);
-      };
-    }
+    window.solana.on("connect", handleConnect);
+    window.solana.on("disconnect", handleDisconnect);
+
+    return () => {
+      window.solana.off("connect", handleConnect);
+      window.solana.off("disconnect", handleDisconnect);
+    };
   }, []);
 
-  // Mobile: Open Phantom app via deep link
-  const connectMobile = useCallback(() => {
-    const appUrl = encodeURIComponent(window.location.href);
-    const redirectUrl = encodeURIComponent(window.location.href);
+  // 🔗 Connect (Mobile + Desktop)
+  const connect = useCallback(async () => {
+    if (connecting) return;
 
-    const deepLink =
-      `https://phantom.app/ul/v1/connect?app_url=${appUrl}&redirect_link=${redirectUrl}`;
-
-    window.location.href = deepLink;
-  }, []);
-
-  // Desktop: Connect via Phantom extension
-  const connectDesktop = useCallback(async () => {
     if (!window.solana?.isPhantom) {
-      alert("Phantom extension not found. Please install it from phantom.app");
+      alert("❌ Phantom wallet not found. Install it first.");
       return;
     }
 
     try {
+      console.log("🚀 Connecting...");
+
       setConnecting(true);
+
+      // 🔥 أهم سطر (يحل مشكلة الموبايل)
       const resp = await window.solana.connect();
-      setPublicKey(resp.publicKey.toString());
+
+      const key = resp.publicKey.toString();
+
+      setPublicKey(key);
       setConnected(true);
-      console.log("Connected:", resp.publicKey.toString());
+
+      console.log("✅ Connected:", key);
     } catch (err) {
-      console.error("Connection error:", err);
-      if (err.message?.includes("User rejected")) {
-        console.log("User rejected connection");
+      console.error("❌ Connection error:", err);
+
+      if (err?.message?.includes("User rejected")) {
+        console.log("⚠️ User rejected connection");
       }
     } finally {
       setConnecting(false);
     }
-  }, []);
+  }, [connecting]);
 
-  // Disconnect
+  // 🔌 Disconnect
   const disconnect = useCallback(async () => {
-    if (window.solana?.disconnect) {
-      await window.solana.disconnect();
+    try {
+      await window.solana?.disconnect();
       setConnected(false);
       setPublicKey(null);
+    } catch (err) {
+      console.error("Disconnect error:", err);
     }
   }, []);
-
-  // Auto-connect based on device type
-  const connect = useCallback(async () => {
-    if (isMobile) {
-      connectMobile();
-    } else {
-      await connectDesktop();
-    }
-  }, [isMobile, connectMobile, connectDesktop]);
 
   return {
     publicKey,
     connected,
     connecting,
-    isPhantomInstalled,
     isMobile,
     connect,
     disconnect,
