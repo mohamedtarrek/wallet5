@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { transact } from "@solana-mobile/mobile-wallet-adapter-protocol";
 
+const STORAGE_KEY = "wallet_public_key";
+
 /**
  * Solana Wallet Hook (Mobile + Desktop)
  * - Mobile: transact from @solana-mobile/mobile-wallet-adapter-protocol
  * - Desktop: window.solana (Wallet Standard)
+ * - Persists state via localStorage for mobile redirect recovery
  */
 export function useSolanaWallet() {
   const [publicKey, setPublicKey] = useState(null);
@@ -15,23 +18,34 @@ export function useSolanaWallet() {
     typeof navigator !== "undefined" &&
     /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
-  // Restore session after Phantom redirect (desktop)
+  // Restore session on app load (handles mobile redirect + desktop reload)
   useEffect(() => {
-    const checkConnection = async () => {
+    const restoreSession = async () => {
       try {
+        // 1. Try desktop Phantom first
         if (window.solana?.isPhantom && window.solana.isConnected) {
           const key = window.solana.publicKey?.toString();
           if (key) {
             setPublicKey(key);
             setConnected(true);
-            console.log("[WALLET] Session restored:", key);
+            console.log("[WALLET] Desktop session restored:", key);
+            return;
           }
+        }
+
+        // 2. Fallback: check localStorage (mobile redirect recovery)
+        const storedKey = localStorage.getItem(STORAGE_KEY);
+        if (storedKey) {
+          setPublicKey(storedKey);
+          setConnected(true);
+          console.log("[WALLET] Mobile session restored from storage:", storedKey);
         }
       } catch (err) {
         console.error("[WALLET] Restore error:", err);
       }
     };
-    checkConnection();
+
+    restoreSession();
   }, []);
 
   // Listen to desktop connection events
@@ -40,13 +54,15 @@ export function useSolanaWallet() {
 
     const handleConnect = () => {
       const key = window.solana.publicKey?.toString();
-      console.log("[WALLET] Connected:", key);
+      console.log("[WALLET] Desktop connected:", key);
       setPublicKey(key);
       setConnected(true);
+      localStorage.setItem(STORAGE_KEY, key);
     };
 
     const handleDisconnect = () => {
-      console.log("[WALLET] Disconnected");
+      console.log("[WALLET] Desktop disconnected");
+      localStorage.removeItem(STORAGE_KEY);
       setPublicKey(null);
       setConnected(false);
     };
@@ -60,7 +76,20 @@ export function useSolanaWallet() {
     };
   }, []);
 
-  // Mobile connect using transact from protocol
+  // Persist helper
+  const persistKey = useCallback((key) => {
+    localStorage.setItem(STORAGE_KEY, key);
+    setPublicKey(key);
+    setConnected(true);
+  }, []);
+
+  const clearKey = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY);
+    setPublicKey(null);
+    setConnected(false);
+  }, []);
+
+  // Mobile connect using transact
   const connectMobile = useCallback(async () => {
     console.log("[WALLET] Mobile connect via transact...");
 
@@ -82,22 +111,21 @@ export function useSolanaWallet() {
 
         const publicKeyStr = accounts[0].address.toString();
 
-        console.log("[WALLET] Authorized:", publicKeyStr);
+        console.log("[WALLET] Mobile authorized:", publicKeyStr);
 
-        setPublicKey(publicKeyStr);
-        setConnected(true);
+        // Persist for redirect recovery
+        persistKey(publicKeyStr);
       });
     } catch (err) {
       console.error("[WALLET] Mobile connect error:", err);
 
       if (err?.message?.includes("User rejected") ||
-          err?.message?.includes("cancelled") ||
           err?.message?.includes("cancelled")) {
         console.log("[WALLET] User rejected or cancelled");
       }
       throw err;
     }
-  }, []);
+  }, [persistKey]);
 
   // Desktop connect via window.solana
   const connectDesktop = useCallback(async () => {
@@ -112,6 +140,7 @@ export function useSolanaWallet() {
       const resp = await window.solana.connect();
       const key = resp.publicKey.toString();
 
+      // Desktop persists via event listener above
       setPublicKey(key);
       setConnected(true);
 
@@ -153,13 +182,13 @@ export function useSolanaWallet() {
       } else {
         await window.solana?.disconnect();
       }
-      setConnected(false);
-      setPublicKey(null);
       console.log("[WALLET] Disconnected");
     } catch (err) {
       console.error("[WALLET] Disconnect error:", err);
+    } finally {
+      clearKey();
     }
-  }, [isMobile]);
+  }, [isMobile, clearKey]);
 
   return {
     publicKey,
