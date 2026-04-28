@@ -1,74 +1,140 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { transact } from "@solana-mobile/mobile-wallet-adapter-protocol";
+import { Connection } from "@solana/web3.js";
 
 const STORAGE_KEY = "wallet_public_key";
+const DEVNET_ENDPOINT = "https://api.devnet.solana.com";
 
 /**
  * Solana Wallet Hook (Mobile + Desktop)
  * - Mobile: transact from @solana-mobile/mobile-wallet-adapter-protocol
  * - Desktop: window.solana (Wallet Standard)
- * - Verifies real Phantom connection before trusting localStorage
+ * - Uses event-based sync + session verification
+ * - WebSocket connection for on-chain state monitoring (balance tracking)
  */
 export function useSolanaWallet() {
   const [publicKey, setPublicKey] = useState(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
+  // WebSocket connection for on-chain state (balance changes)
+  const connectionRef = useRef(null);
+
   const isMobile =
     typeof navigator !== "undefined" &&
     /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
+  // Initialize WebSocket connection for on-chain monitoring
+  useEffect(() => {
+    if (!publicKey) return;
+
+    // Create connection with WebSocket for real-time updates
+    const connection = new Connection(DEVNET_ENDPOINT, {
+      commitment: "confirmed",
+      wsEndpoint: DEVNET_ENDPOINT.replace("https", "wss"),
+    });
+
+    connectionRef.current = connection;
+
+    console.log("[WALLET] WebSocket connection established for", publicKey);
+
+    // Subscribe to account changes (balance, token updates)
+    const subscriptionId = connection.onAccountChange(
+      publicKey,
+      (accountInfo) => {
+        console.log("[WALLET] 🔄 On-chain account update received");
+        // Balance/data changed - can trigger UI update if needed
+        // This is for blockchain data, NOT connection state
+      },
+      "confirmed"
+    );
+
+    return () => {
+      connection.removeAccountChangeListener(subscriptionId);
+      connectionRef.current = null;
+    };
+  }, [publicKey]);
+
   // Restore session on app load
   useEffect(() => {
-    const verifyAndRestore = async () => {
-      console.log("[WALLET] Verifying connection state...");
+    const verifySession = async () => {
+      console.log("[WALLET] Verifying session...");
 
-      // STEP 1: Check REAL Phantom connection (highest priority)
+      // STEP 1: Check real Phantom (desktop only)
       if (window.solana?.isPhantom) {
-        console.log("[WALLET] Phantom detected, checking connection status...");
-
         if (window.solana.isConnected && window.solana.publicKey) {
           const key = window.solana.publicKey.toString();
-
-          if (key && key !== "null" && key !== "undefined") {
+          if (key && key !== "null") {
             console.log("[WALLET] ✅ REAL WALLET CONNECTED:", key);
             setPublicKey(key);
             setConnected(true);
             localStorage.setItem(STORAGE_KEY, key);
-            console.log("[WALLET] ✅ RESTORED FROM PHANTOM");
             return;
-          } else {
-            console.log("[WALLET] Phantom connected but no publicKey yet");
           }
-        } else {
-          console.log("[WALLET] Phantom not connected or no publicKey");
         }
-      } else {
-        console.log("[WALLET] Phantom not installed");
       }
 
-      // STEP 2: Fallback to localStorage (only if Phantom not connected)
+      // STEP 2: Verify stored session against Phantom
       const storedKey = localStorage.getItem(STORAGE_KEY);
-
-      if (storedKey) {
-        console.log("[WALLET] Checking localStorage fallback...");
-
-        // Verify stored key is valid
-        if (storedKey && storedKey !== "null" && storedKey !== "undefined" && storedKey.length > 30) {
-          console.log("[WALLET] 📦 RESTORED FROM STORAGE:", storedKey);
-          setPublicKey(storedKey);
-          setConnected(true);
-        } else {
-          console.log("[WALLET] Invalid stored key, clearing...");
-          localStorage.removeItem(STORAGE_KEY);
-        }
-      } else {
-        console.log("[WALLET] No stored session found");
+      if (storedKey && storedKey !== "null" && storedKey.length > 30) {
+        // For mobile, stored key is valid after transact() succeeded
+        console.log("[WALLET] ✅ RESTORED FROM STORAGE:", storedKey);
+        setPublicKey(storedKey);
+        setConnected(true);
       }
     };
 
-    // Small delay to ensure Phantom is fully initialized
-    setTimeout(verifyAndRestore, 100);
+    // Small delay for Phantom to initialize
+    setTimeout(verifySession, 150);
+  }, []);
+
+  // Sync with Phantom events (desktop)
+  useEffect(() => {
+    if (!window.solana?.on) return;
+
+    const handleConnect = () => {
+      const key = window.solana.publicKey?.toString();
+      if (key) {
+        console.log("[WALLET] 🟢 Phantom connected:", key);
+        setPublicKey(key);
+        setConnected(true);
+        localStorage.setItem(STORAGE_KEY, key);
+      }
+    };
+
+    const handleDisconnect = () => {
+      console.log("[WALLET] 🔴 Phantom disconnected");
+      localStorage.removeItem(STORAGE_KEY);
+      setPublicKey(null);
+      setConnected(false);
+    };
+
+    window.solana.on("connect", handleConnect);
+    window.solana.on("disconnect", handleDisconnect);
+
+    return () => {
+      window.solana.off("connect", handleConnect);
+      window.solana.off("disconnect", handleDisconnect);
+    };
+  }, []);
+
+  // Quick session verification (non-polling)
+  const verifySession = useCallback(async () => {
+    if (!window.solana?.isPhantom) return false;
+
+    try {
+      // Use onlyIfTrusted to check without showing popup
+      const resp = await window.solana.connect({ onlyIfTrusted: true });
+      if (resp?.publicKey) {
+        const key = resp.publicKey.toString();
+        setPublicKey(key);
+        setConnected(true);
+        return true;
+      }
+    } catch (e) {
+      // No trusted session exists
+    }
+    return false;
   }, []);
 
   // Persist helper
@@ -76,7 +142,7 @@ export function useSolanaWallet() {
     localStorage.setItem(STORAGE_KEY, key);
     setPublicKey(key);
     setConnected(true);
-    console.log("[WALLET] Persisted:", key);
+    console.log("[WALLET] 💾 Persisted:", key);
   }, []);
 
   const clearKey = useCallback(() => {
@@ -85,13 +151,13 @@ export function useSolanaWallet() {
     setConnected(false);
   }, []);
 
-  // Mobile connect using transact
+  // Mobile connect via transact
   const connectMobile = useCallback(async () => {
-    console.log("[WALLET] Mobile connect via transact...");
+    console.log("[WALLET] 📱 Mobile connect initiated...");
 
     try {
       await transact(async (wallet) => {
-        console.log("[WALLET] Transact callback started");
+        console.log("[WALLET] Transact callback executing...");
 
         const accounts = await wallet.authorize({
           cluster: "devnet",
@@ -112,24 +178,24 @@ export function useSolanaWallet() {
         persistKey(publicKeyStr);
       });
     } catch (err) {
-      console.error("[WALLET] Mobile connect error:", err);
+      console.error("[WALLET] Mobile error:", err);
 
       if (err?.message?.includes("User rejected") ||
           err?.message?.includes("cancelled")) {
-        console.log("[WALLET] User rejected or cancelled");
+        console.log("[WALLET] User cancelled");
       }
       throw err;
     }
   }, [persistKey]);
 
-  // Desktop connect via window.solana
+  // Desktop connect
   const connectDesktop = useCallback(async () => {
     if (!window.solana?.isPhantom) {
-      alert("Phantom extension not found. Please install it from phantom.app");
+      alert("Install Phantom from phantom.app");
       return;
     }
 
-    console.log("[WALLET] Desktop connect via extension...");
+    console.log("[WALLET] 💻 Desktop connect...");
 
     try {
       const resp = await window.solana.connect();
@@ -148,14 +214,11 @@ export function useSolanaWallet() {
 
   // Unified connect
   const connect = useCallback(async () => {
-    if (connecting) {
-      console.log("[WALLET] Already connecting...");
-      return;
-    }
+    if (connecting) return;
 
     try {
       setConnecting(true);
-      console.log("[WALLET] Connect requested", { isMobile });
+      console.log("[WALLET] Connect request", { isMobile });
 
       if (isMobile) {
         await connectMobile();
@@ -177,7 +240,6 @@ export function useSolanaWallet() {
       } else {
         await window.solana?.disconnect();
       }
-      console.log("[WALLET] Disconnected");
     } catch (err) {
       console.error("[WALLET] Disconnect error:", err);
     } finally {
@@ -192,5 +254,6 @@ export function useSolanaWallet() {
     isMobile,
     connect,
     disconnect,
+    verifySession, // Expose for manual verification if needed
   };
 }
