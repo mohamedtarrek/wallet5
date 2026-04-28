@@ -4,14 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>متجر الدفع عبر Phantom | Solana Pay</title>
-    <!-- خطوط وتصميم عصري -->
+
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Cairo', sans-serif;
@@ -32,16 +29,11 @@
             border-radius: 48px;
             padding: 30px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 25px 45px rgba(0,0,0,0.3);
         }
 
         h1 {
-            font-size: 2rem;
             text-align: center;
-            background: linear-gradient(135deg, #fff, #c084fc, #a78bfa);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
+            color: white;
             margin-bottom: 10px;
         }
 
@@ -49,12 +41,10 @@
             text-align: center;
             color: #a78bfa;
             margin-bottom: 30px;
-            font-weight: 500;
         }
 
-        /* بطاقة المحفظة */
         .wallet-card {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0,0,0,0.4);
             border-radius: 32px;
             padding: 20px;
             margin-bottom: 25px;
@@ -69,6 +59,7 @@
             padding: 6px 16px;
             border-radius: 40px;
             margin-bottom: 15px;
+            color: white;
         }
 
         .dot {
@@ -76,55 +67,17 @@
             height: 10px;
             border-radius: 50%;
         }
-        .dot.red { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
-        .dot.green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+
+        .dot.red { background: #ef4444; }
+        .dot.green { background: #10b981; }
 
         .address-box {
             background: #0b0a1a;
             padding: 12px;
-            border-radius: 28px;
+            border-radius: 20px;
             font-family: monospace;
-            font-size: 0.85rem;
             color: #cbd5ff;
             word-break: break-all;
-            border: 1px solid #2d2a5e;
-            margin-top: 10px;
-        }
-
-        .copy-btn {
-            background: none;
-            border: none;
-            color: #a78bfa;
-            cursor: pointer;
-            margin-right: 8px;
-        }
-
-        /* نموذج الدفع */
-        .payment-section {
-            background: rgba(255,255,255,0.05);
-            border-radius: 28px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-        .input-group label {
-            display: block;
-            color: #cad2ff;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 14px;
-            background: #0b0a1a;
-            border: 1px solid #3b3670;
-            border-radius: 28px;
-            color: white;
-            font-size: 1rem;
-            font-family: monospace;
         }
 
         .btn {
@@ -133,36 +86,24 @@
             border: none;
             border-radius: 60px;
             font-weight: bold;
-            font-size: 1rem;
             cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            margin-top: 10px;
         }
+
         .btn-primary { background: linear-gradient(95deg, #9945FF, #14F195); color: white; }
-        .btn-outline { background: transparent; border: 1.5px solid #a78bfa; color: #e0d9ff; }
-        .btn-primary:active { transform: scale(0.97); }
+        .btn-outline { background: transparent; border: 1px solid #a78bfa; color: white; }
 
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px dashed #3b3670;
+            margin: 10px 0;
+            color: white;
         }
-
-        footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 0.7rem;
-            color: #7c7fba;
-        }
-        .loading { animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
+
 <body>
+
 <div class="container">
     <h1>🦄 متجر SOL</h1>
     <div class="sub">ادفع باستخدام محفظة Phantom</div>
@@ -172,199 +113,104 @@
             <span class="dot red" id="statusDot"></span>
             <span id="statusText">غير متصل</span>
         </div>
-        <div id="walletInfo" style="display: none;">
-            <div class="address-box">
-                <span id="walletAddress"></span>
-                <button class="copy-btn" id="copyBtn">📋</button>
-            </div>
-        </div>
-        <div id="installMsg" style="display: none; color: #ffccaa; margin-top: 10px;">
-            ⚠️ لم يتم العثور على محفظة Phantom. قم بتثبيت الإضافة من متجر Chrome.
+
+        <div id="walletInfo" style="display:none;">
+            <div class="address-box" id="walletAddress"></div>
         </div>
     </div>
 
-    <div class="payment-section">
-        <div class="info-row">
-            <span>💎 سعر السلعة</span>
-            <span id="productPrice">0.05 SOL</span>
-        </div>
-        <div class="info-row">
-            <span>💸 العمولة</span>
-            <span>0.000005 SOL</span>
-        </div>
-        <div class="input-group">
-            <label>📧 بريدك الإلكتروني (للفاتورة)</label>
-            <input type="email" id="customerEmail" placeholder="example@domain.com">
-        </div>
-        <button class="btn btn-primary" id="payBtn" disabled>
-            <span>💸</span> إتمام الدفع
-        </button>
-        <button class="btn btn-outline" id="connectBtn">
-            🔗 ربط المحفظة
-        </button>
+    <div class="info-row">
+        <span>السعر</span>
+        <span>0.05 SOL</span>
     </div>
-    
-    <div id="txStatus" style="text-align: center; margin-top: 15px; color: #c084fc; font-size: 0.85rem;"></div>
-    <footer>معاملات آمنة على شبكة Solana</footer>
+
+    <input id="email" placeholder="البريد الإلكتروني"
+           style="width:100%;padding:12px;border-radius:20px;margin-top:10px;border:none;">
+
+    <button class="btn btn-primary" id="payBtn" disabled>💸 دفع</button>
+    <button class="btn btn-outline" id="connectBtn">🔗 ربط المحفظة</button>
 </div>
 
-<!-- استيراد مكتبات Solana Web3 -->
 <script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.js"></script>
 
 <script>
-    // --- العناصر الأساسية ---
+document.addEventListener("DOMContentLoaded", () => {
+
     let provider = null;
-    let connectedPublicKey = null;
-    
-    // عنوان التاجر (استبدله بعنوان محفظتك الحقيقية)
-    const MERCHANT_WALLET = "DjDZfRk6rNpkgVMyjWjQab6dbXo5BVpLvQmzMvM7tP7u"; // عنوان وهمي - ضع عنوانك هنا
+    let wallet = null;
 
-    // --- تعريف دوال مساعدة ---
-    function shortenAddress(addr) {
-        if (!addr) return '';
-        return addr.slice(0, 5) + '...' + addr.slice(-4);
-    }
+    const MERCHANT_WALLET = "DjDZfRk6rNpkgVMyjWjQab6dbXo5BVpLvQmzMvM7tP7u";
 
-    function updateUI(isConnected, address = null) {
-        const statusDot = document.getElementById('statusDot');
-        const statusText = document.getElementById('statusText');
-        const walletInfo = document.getElementById('walletInfo');
-        const walletAddressSpan = document.getElementById('walletAddress');
-        const payBtn = document.getElementById('payBtn');
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const walletInfo = document.getElementById("walletInfo");
+    const walletAddress = document.getElementById("walletAddress");
+    const payBtn = document.getElementById("payBtn");
 
-        if (isConnected && address) {
-            statusDot.className = 'dot green';
-            statusText.innerText = 'متصل';
-            walletInfo.style.display = 'block';
-            walletAddressSpan.innerText = shortenAddress(address);
-            walletAddressSpan.setAttribute('data-full', address);
+    function updateUI(connected, addr) {
+        if (connected) {
+            statusDot.className = "dot green";
+            statusText.innerText = "متصل";
+            walletInfo.style.display = "block";
+            walletAddress.innerText = addr;
             payBtn.disabled = false;
         } else {
-            statusDot.className = 'dot red';
-            statusText.innerText = 'غير متصل';
-            walletInfo.style.display = 'none';
+            statusDot.className = "dot red";
+            statusText.innerText = "غير متصل";
+            walletInfo.style.display = "none";
             payBtn.disabled = true;
         }
     }
 
-    // --- دالة ربط المحفظة (خاصة بالمتصفح) ---
     async function connectWallet() {
-        const installMsg = document.getElementById('installMsg');
-        
-        // 1. التأكد من وجود Phantom في المتصفح [citation:3][citation:6]
-        if (!window.solana || !window.solana.isPhantom) {
-            installMsg.style.display = 'block';
-            alert("يرجى تثبيت محفظة Phantom أولاً\nمن متجر Chrome Web Store.");
-            window.open('https://chrome.google.com/webstore/detail/phantom/bfnaelmomeimhlpmgjnjophhpkkoljpa', '_blank');
-            return;
-        }
-
-        provider = window.solana;
-        installMsg.style.display = 'none';
-
         try {
-            // 2. طلب الاتصال (هنا تظهر نافذة Phantom المنبثقة) [citation:1]
-            const response = await provider.connect();
-            connectedPublicKey = response.publicKey.toString();
-            updateUI(true, connectedPublicKey);
-            
-            // 3. الاستماع لتغيير الحساب (في حال قام العميل بتبديل المحفظة)
-            provider.on('accountChanged', (newPublicKey) => {
-                if (newPublicKey) {
-                    connectedPublicKey = newPublicKey.toString();
-                    updateUI(true, connectedPublicKey);
-                } else {
-                    updateUI(false);
-                    connectedPublicKey = null;
-                }
-            });
-        } catch (err) {
-            console.error(err);
-            alert("فشل الاتصال: " + err.message);
-            updateUI(false);
+            if (!window.solana || !window.solana.isPhantom) {
+                alert("قم بتثبيت Phantom أولاً");
+                return;
+            }
+
+            provider = window.solana;
+            const res = await provider.connect();
+            wallet = res.publicKey.toString();
+
+            updateUI(true, wallet);
+
+        } catch (e) {
+            alert("فشل الاتصال");
+            console.log(e);
         }
     }
 
-    // --- دالة إتمام الدفع وتحويل SOL [citation:7]---
-    async function processPayment() {
-        if (!provider || !connectedPublicKey) {
-            alert("الرجاء ربط المحفظة أولاً.");
-            return;
-        }
+    async function pay() {
+        if (!provider || !wallet) return alert("اربط المحفظة أولاً");
 
-        const statusDiv = document.getElementById('txStatus');
-        const email = document.getElementById('customerEmail').value;
-        
-        // تحقق بسيط من البريد الإلكتروني
-        if (!email || !email.includes('@')) {
-            alert("الرجاء إدخال بريد إلكتروني صحيح للفاتورة.");
-            return;
-        }
+        const conn = new solanaWeb3.Connection(
+            solanaWeb3.clusterApiUrl("devnet"),
+            "confirmed"
+        );
 
-        // المبلغ الثابت للمنتج (0.05 SOL)
-        const amountInSOL = 0.05;
-        const lamports = amountInSOL * 1e9; // تحويل SOL إلى Lamports
-        
-        // الاتصال بشبكة Solana الأساسية (Mainnet)
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
-        
-        try {
-            statusDiv.innerHTML = '⏳ جاري تجهير المعاملة...';
-            
-            // إنشاء معاملة التحويل
-            const transaction = new solanaWeb3.Transaction();
-            
-            // إضافة تعليمة التحويل (من العميل إلى التاجر) [citation:10]
-            const instruction = solanaWeb3.SystemProgram.transfer({
-                fromPubkey: new solanaWeb3.PublicKey(connectedPublicKey),
+        const tx = new solanaWeb3.Transaction().add(
+            solanaWeb3.SystemProgram.transfer({
+                fromPubkey: new solanaWeb3.PublicKey(wallet),
                 toPubkey: new solanaWeb3.PublicKey(MERCHANT_WALLET),
-                lamports: lamports
-            });
-            
-            transaction.add(instruction);
-            
-            // تعيين بيانات المعاملة الأساسية
-            const blockhash = await connection.getLatestBlockhash();
-            transaction.recentBlockhash = blockhash.blockhash;
-            transaction.feePayer = new solanaWeb3.PublicKey(connectedPublicKey);
-            
-            statusDiv.innerHTML = '✍️ يرجى التوقيع على المعاملة في محفظة Phantom...';
-            
-            // طلب التوقيع والإرسال عبر Phantom [citation:3][citation:5]
-            const signed = await provider.signAndSendTransaction(transaction);
-            
-            statusDiv.innerHTML = `✅ تم الدفع بنجاح! <br> توقيع المعاملة: ${signed.signature.slice(0, 20)}...`;
-            
-            // هنا يمكنك إضافة كود لإرسال البريد الإلكتروني للمستخدم أو تحديث حالة الطلب في متجرك.
-            console.log("تم خصم المبلغ من:", connectedPublicKey);
-            console.log("إشعار الدفع سيُرسل إلى:", email);
-            
-        } catch (error) {
-            console.error(error);
-            statusDiv.innerHTML = '❌ فشل الدفع: ' + error.message;
-            alert("حدث خطأ أثناء الدفع: " + error.message);
-        }
+                lamports: 0.05 * 1e9
+            })
+        );
+
+        const blockhash = await conn.getLatestBlockhash();
+        tx.recentBlockhash = blockhash.blockhash;
+        tx.feePayer = new solanaWeb3.PublicKey(wallet);
+
+        const signed = await provider.signAndSendTransaction(tx);
+        alert("تم الدفع: " + signed.signature);
     }
 
-    // --- ربط الأحداث والأزرار ---
-    document.getElementById('connectBtn').addEventListener('click', connectWallet);
-    document.getElementById('payBtn').addEventListener('click', processPayment);
-    
-    // نسخ العنوان للحافظة
-    document.getElementById('copyBtn').addEventListener('click', () => {
-        const fullAddr = document.getElementById('walletAddress').getAttribute('data-full');
-        if (fullAddr) {
-            navigator.clipboard.writeText(fullAddr);
-            alert("تم نسخ عنوان المحفظة!");
-        }
-    });
+    document.getElementById("connectBtn").onclick = connectWallet;
+    document.getElementById("payBtn").onclick = pay;
 
-    // فتح تلقائي إذا كان متصلاً مسبقاً
-    window.addEventListener('load', () => {
-        if (window.solana?.isPhantom && window.solana.isConnected) {
-            connectWallet();
-        }
-    });
+    updateUI(false);
+});
 </script>
+
 </body>
 </html>
