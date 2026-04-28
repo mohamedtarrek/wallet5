@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { usePhantomWallet } from "./usePhantomWallet";
 
 export default function App() {
@@ -10,6 +10,40 @@ export default function App() {
     connect,
     disconnect,
   } = usePhantomWallet();
+
+  // 🔥 Debug logger
+  const log = (msg, data) => {
+    console.log("[WALLET DEBUG]:", msg, data || "");
+  };
+
+  useEffect(() => {
+    log("APP LOADED");
+
+    if (window.solana) {
+      log("PHANTOM DETECTED");
+      log("IS CONNECTED:", window.solana.isConnected);
+    } else {
+      log("PHANTOM NOT FOUND");
+    }
+  }, []);
+
+  const handleConnect = async () => {
+    if (connecting) {
+      log("BLOCKED: already connecting");
+      return;
+    }
+
+    try {
+      log("CONNECT BUTTON CLICKED");
+      log("IS MOBILE:", isMobile);
+
+      await connect();
+
+      log("CONNECT FUNCTION FINISHED");
+    } catch (err) {
+      log("CONNECT ERROR", err);
+    }
+  };
 
   const truncatedKey = publicKey
     ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}`
@@ -28,9 +62,11 @@ export default function App() {
         fontFamily: "system-ui, sans-serif",
       }}
     >
-      <h1 style={{ fontSize: "2.5rem", marginBottom: "2rem" }}>SOL Store</h1>
+      <h1 style={{ fontSize: "2.5rem", marginBottom: "2rem" }}>
+        SOL Store
+      </h1>
 
-      {/* Connection Status */}
+      {/* ✅ Connected UI */}
       {connected && publicKey ? (
         <div
           style={{
@@ -50,8 +86,12 @@ export default function App() {
           >
             {truncatedKey}
           </div>
+
           <button
-            onClick={disconnect}
+            onClick={() => {
+              log("DISCONNECT CLICKED");
+              disconnect();
+            }}
             style={{
               padding: "0.75rem 1.5rem",
               background: "#e53935",
@@ -66,8 +106,9 @@ export default function App() {
           </button>
         </div>
       ) : (
+        /* ❌ Not connected */
         <button
-          onClick={connect}
+          onClick={handleConnect}
           disabled={connecting}
           style={{
             padding: "1rem 2rem",
@@ -103,7 +144,7 @@ export default function App() {
         </button>
       )}
 
-      {/* Device indicator */}
+      {/* Device info */}
       {connected && (
         <p style={{ marginTop: "1rem", opacity: 0.7, fontSize: "0.9rem" }}>
           {isMobile ? "Mobile" : "Desktop"} • Connected via Phantom
@@ -118,7 +159,7 @@ export default function App() {
         </p>
       )}
 
-      {/* Spin animation */}
+      {/* Animation */}
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
