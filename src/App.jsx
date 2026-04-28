@@ -1,3 +1,10 @@
+import VConsole from 'vconsole';
+
+// تفعيل vConsole في بيئة التطوير فقط
+if (import.meta.env.DEV) {
+  const vConsole = new VConsole();
+  console.log("[APP] ✅ VConsole is active! Press the green button >>");
+}
 import React, { useEffect } from "react";
 import { useSolanaWallet } from "./useSolanaWallet";
 
