@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>اتصال Phantom - dApp على Solana</title>
+    <title>Phantom dApp - اتصل الآن</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Cairo', sans-serif;
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
@@ -23,412 +21,266 @@
             padding: 20px;
             direction: rtl;
         }
-
         .container {
-            max-width: 550px;
+            max-width: 500px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.07);
+            background: rgba(255,255,255,0.1);
             backdrop-filter: blur(12px);
-            border-radius: 48px;
-            padding: 30px 28px 40px;
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 40px;
+            padding: 30px 25px;
+            border: 1px solid rgba(255,255,255,0.2);
         }
-
         h1 {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #fff, #c084fc, #a78bfa);
+            background: linear-gradient(135deg, #fff, #c084fc);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
             text-align: center;
-            margin-bottom: 12px;
         }
-
         .sub {
             text-align: center;
             color: #cad2ff;
-            margin-bottom: 32px;
-            font-size: 0.9rem;
+            margin: 10px 0 25px;
         }
-
-        .wallet-status {
-            background: rgba(0, 0, 0, 0.4);
+        .status-card {
+            background: rgba(0,0,0,0.4);
             border-radius: 28px;
             padding: 20px;
-            margin-bottom: 25px;
             text-align: center;
-            border: 1px solid rgba(165, 180, 252, 0.3);
+            margin-bottom: 20px;
         }
-
-        .status-badge {
+        .badge {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             background: #1e1a3b;
-            padding: 8px 18px;
+            padding: 6px 16px;
             border-radius: 40px;
-            margin-bottom: 14px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            margin-bottom: 12px;
         }
-
-        .led {
-            width: 12px;
-            height: 12px;
+        .dot {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: #6b7280;
         }
-
-        .led.green {
-            background: #10b981;
-            box-shadow: 0 0 8px #10b981;
-        }
-
-        .led.red {
-            background: #ef4444;
-            box-shadow: 0 0 6px #ef4444;
-        }
-
-        .address-box {
+        .dot.red { background: #ef4444; }
+        .dot.green { background: #10b981; box-shadow: 0 0 6px #10b981; }
+        .dot.yellow { background: #f59e0b; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+        .address {
             background: #0b0a1a;
-            padding: 12px 16px;
-            border-radius: 32px;
+            padding: 10px;
+            border-radius: 30px;
             font-family: monospace;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #cbd5ff;
             word-break: break-all;
-            border: 1px solid #2d2a5e;
-            margin: 12px 0;
+            margin-top: 10px;
         }
-
-        .copy-btn {
-            background: none;
-            border: none;
-            color: #a78bfa;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-right: 8px;
-        }
-
-        .btn-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            justify-content: center;
-            margin: 24px 0 20px;
-        }
-
-        .btn {
+        button {
             font-family: 'Cairo', sans-serif;
-            font-weight: 700;
-            font-size: 1rem;
-            padding: 12px 24px;
-            border-radius: 60px;
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
             border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: #2d2a5e;
-            color: white;
-        }
-
-        .btn-primary {
+            border-radius: 60px;
             background: linear-gradient(95deg, #9945FF, #14F195);
             color: white;
-            font-weight: 800;
+            cursor: pointer;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-
-        .btn-outline {
-            background: transparent;
-            border: 1.5px solid #a78bfa;
-            color: #e0d9ff;
-        }
-
-        .network-info {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 28px;
-            padding: 18px;
-            margin-top: 20px;
-        }
-
+        button:active { transform: scale(0.97); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
         .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 0.9rem;
-            padding: 6px 0;
+            padding: 10px 0;
             border-bottom: 1px dashed #3b3670;
+            color: #e0d9ff;
         }
-
-        .info-label {
-            font-weight: 600;
-            color: #b9c2ff;
-        }
-
-        .info-value {
-            font-family: monospace;
-            font-weight: 500;
-            color: #f0eefc;
-        }
-
-        .sol-balance {
-            font-size: 1.1rem;
-            font-weight: 800;
-            background: #00000040;
-            padding: 8px 12px;
-            border-radius: 32px;
-            text-align: center;
-        }
-
+        .info-label { font-weight: 600; color: #b9c2ff; }
+        .balance { font-size: 1.3rem; font-weight: 800; text-align: center; padding: 5px; }
         footer {
             text-align: center;
-            margin-top: 25px;
-            font-size: 0.7rem;
+            margin-top: 20px;
+            font-size: 0.65rem;
             color: #7c7fba;
-        }
-
-        button:active {
-            transform: scale(0.97);
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1><i class="fab fa-phantom"></i> Phantom dApp</h1>
-    <div class="sub">تواصل مع محفظتك اللامركزية على Solana</div>
+    <h1>🟣 Phantom dApp</h1>
+    <div class="sub">تواصل مع محفظتك اللامركزية</div>
 
-    <div class="wallet-status">
-        <div class="status-badge">
-            <span class="led red" id="ledIndicator"></span>
-            <span id="connectionText">غير متصل</span>
+    <div class="status-card">
+        <div class="badge">
+            <span class="dot red" id="statusDot"></span>
+            <span id="statusText">غير متصل</span>
         </div>
-        <div id="walletDetails" style="display: none;">
-            <div class="address-box">
-                <span id="walletAddress">...</span>
-                <button class="copy-btn" id="copyAddressBtn"><i class="far fa-copy"></i></button>
-            </div>
-        </div>
-        <div id="mobileInstallMsg" style="display: none; background: #9945FF20; padding: 15px; border-radius: 20px; margin-top: 10px;">
-            <i class="fas fa-mobile-alt"></i> اضغط الزر أدناه لفتح التطبيق
-        </div>
-        <div id="notInstalledMsg" style="display: none; color: #ffccaa; background: #aa2e2e30; padding: 10px; border-radius: 28px;">
-            <i class="fas fa-exclamation-triangle"></i> محفظة Phantom غير مثبتة
+        <div id="addressBox" style="display:none;">
+            <div class="address" id="addressDisplay"></div>
         </div>
     </div>
 
-    <div class="btn-group">
-        <button class="btn btn-primary" id="connectBtn"><i class="fas fa-link"></i> اتصل بالمحفظة</button>
-        <button class="btn btn-outline" id="disconnectBtn" disabled><i class="fas fa-unlink"></i> قطع الاتصال</button>
-    </div>
+    <button id="connectMainBtn">
+        🔗 اتصال المحفظة
+    </button>
 
-    <div class="network-info">
-        <div class="info-row">
-            <span class="info-label"><i class="fas fa-globe"></i> الشبكة:</span>
-            <span class="info-value" id="networkName">—</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label"><i class="fas fa-coins"></i> رصيد SOL:</span>
-            <span class="info-value sol-balance" id="solBalance">0.00 SOL</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label"><i class="fas fa-info-circle"></i> الحالة:</span>
-            <span class="info-value" id="connectionDetail">جاري التحضير...</span>
-        </div>
+    <div class="info-row">
+        <span class="info-label">🌐 الشبكة:</span>
+        <span id="networkInfo">—</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">💰 رصيد SOL:</span>
+        <span class="balance" id="balanceInfo">0.00 SOL</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">📱 الحالة:</span>
+        <span id="statusMsg">اضغط الزر للاتصال</span>
     </div>
 
     <footer>
-        <i class="fas fa-shield-alt"></i> تفاعل آمن مع Solana | Phantom Wallet
+        <i class="fas fa-shield-alt"></i> متوافق مع Phantom • اضغط لفتح المحفظة
     </footer>
 </div>
 
 <script>
+    const connectBtn = document.getElementById('connectMainBtn');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const addressBox = document.getElementById('addressBox');
+    const addressDisplay = document.getElementById('addressDisplay');
+    const networkInfoSpan = document.getElementById('networkInfo');
+    const balanceInfoSpan = document.getElementById('balanceInfo');
+    const statusMsgSpan = document.getElementById('statusMsg');
+
     let provider = null;
-    let connectedPublicKey = null;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isPhantomApp = /Phantom/i.test(navigator.userAgent) || window.location.href.includes('phantom');
+    let currentAddress = null;
 
-    // عناصر DOM
-    const connectBtn = document.getElementById('connectBtn');
-    const disconnectBtn = document.getElementById('disconnectBtn');
-    const connectionTextSpan = document.getElementById('connectionText');
-    const ledIndicator = document.getElementById('ledIndicator');
-    const walletDetailsDiv = document.getElementById('walletDetails');
-    const walletAddressSpan = document.getElementById('walletAddress');
-    const copyAddressBtn = document.getElementById('copyAddressBtn');
-    const notInstalledMsg = document.getElementById('notInstalledMsg');
-    const mobileInstallMsg = document.getElementById('mobileInstallMsg');
-    const networkNameSpan = document.getElementById('networkName');
-    const solBalanceSpan = document.getElementById('solBalance');
-    const connectionDetailSpan = document.getElementById('connectionDetail');
-
-    function updateUI(isConnected, address = null) {
-        if (isConnected && address) {
-            connectionTextSpan.innerText = 'متصل';
-            ledIndicator.className = 'led green';
-            walletDetailsDiv.style.display = 'block';
-            walletAddressSpan.innerText = shortenAddress(address);
-            walletAddressSpan.setAttribute('data-full-address', address);
-            connectBtn.disabled = true;
-            disconnectBtn.disabled = false;
-            connectionDetailSpan.innerText = '✅ المحفظة متصلة';
-            fetchSolBalance(address);
-        } else {
-            connectionTextSpan.innerText = 'غير متصل';
-            ledIndicator.className = 'led red';
-            walletDetailsDiv.style.display = 'none';
-            connectBtn.disabled = false;
-            disconnectBtn.disabled = true;
-            connectionDetailSpan.innerText = 'اضغط زر الاتصال';
-            solBalanceSpan.innerText = '0.00 SOL';
-            connectedPublicKey = null;
-        }
+    function shortenAddr(addr) {
+        if (!addr) return '';
+        return addr.slice(0, 6) + '...' + addr.slice(-4);
     }
 
-    function shortenAddress(address) {
-        if (!address) return '';
-        return address.slice(0, 4) + '...' + address.slice(-4);
-    }
-
-    async function fetchSolBalance(publicKeyStr) {
-        if (!publicKeyStr) return;
+    async function getBalance(address) {
         try {
-            const rpcUrl = 'https://api.mainnet-beta.solana.com';
-            const response = await fetch(rpcUrl, {
+            const res = await fetch('https://api.mainnet-beta.solana.com', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     jsonrpc: '2.0',
                     id: 1,
                     method: 'getBalance',
-                    params: [publicKeyStr]
+                    params: [address]
                 })
             });
-            const data = await response.json();
-            if (data.result && typeof data.result.value !== 'undefined') {
+            const data = await res.json();
+            if (data.result) {
                 const sol = data.result.value / 1e9;
-                solBalanceSpan.innerText = `${sol.toFixed(4)} SOL`;
+                balanceInfoSpan.innerHTML = `${sol.toFixed(5)} SOL`;
+                return sol;
             }
-        } catch (err) {
-            console.error('خطأ في الرصيد:', err);
-        }
+        } catch(e) { console.log(e); }
+        balanceInfoSpan.innerHTML = '? SOL';
+        return 0;
     }
 
-    // رابط عميق لفتح Phantom (للموبايل)
-    function openPhantomDeepLink() {
-        const currentUrl = encodeURIComponent(window.location.href);
-        const deepLink = `phantom://browse?url=${currentUrl}`;
-        window.location.href = deepLink;
-        
-        // بديل لمستخدمي iOS
-        setTimeout(() => {
-            window.location.href = 'https://phantom.app/';
-        }, 2500);
+    function setConnected(addr) {
+        currentAddress = addr;
+        statusDot.className = 'dot green';
+        statusText.innerText = '✅ متصل';
+        addressBox.style.display = 'block';
+        addressDisplay.innerText = shortenAddr(addr);
+        addressDisplay.setAttribute('data-full', addr);
+        connectBtn.innerHTML = '✅ المحفظة متصلة';
+        connectBtn.disabled = true;
+        statusMsgSpan.innerText = 'متصل وجاهز';
+        networkInfoSpan.innerText = 'Solana Mainnet';
+        getBalance(addr);
     }
 
-    // التحقق من التثبيت على الموبايل
-    function checkMobileInstall() {
-        if (isMobile && !isPhantomApp) {
-            mobileInstallMsg.style.display = 'block';
-            connectionDetailSpan.innerText = '⚠️ استخدم متصفح Phantom المدمج';
-        }
+    function setDisconnected() {
+        currentAddress = null;
+        statusDot.className = 'dot red';
+        statusText.innerText = 'غير متصل';
+        addressBox.style.display = 'none';
+        addressDisplay.innerText = '';
+        connectBtn.innerHTML = '🔗 اتصال المحفظة';
+        connectBtn.disabled = false;
+        statusMsgSpan.innerText = 'اضغط الزر للاتصال';
+        networkInfoSpan.innerText = '—';
+        balanceInfoSpan.innerHTML = '0.00 SOL';
     }
 
-    // الاتصال (يدعم سطح المكتب والموبايل)
+    function setLoading() {
+        statusDot.className = 'dot yellow';
+        statusText.innerText = 'جاري الاتصال...';
+        statusMsgSpan.innerText = '⚠️ انتظر نافذة Phantom';
+    }
+
     async function connectWallet() {
-        // إذا كان موبايل وليس داخل Phantom App
-        if (isMobile && !isPhantomApp) {
-            openPhantomDeepLink();
-            connectionDetailSpan.innerText = '🔄 جاري فتح التطبيق...';
+        // محاولة الحصول على Phantom من عدة أماكن
+        const phantom = window.solana || (window.phantom?.solana);
+        
+        if (!phantom || !phantom.isPhantom) {
+            statusMsgSpan.innerText = '❌ يرجى تثبيت Phantom أو فتح الموقع من داخل التطبيق';
+            statusDot.className = 'dot red';
+            alert('⚠️ يرجى فتح هذا الموقع من داخل متصفح تطبيق Phantom\n\nكيفية الاستخدام:\n1. افتح تطبيق Phantom\n2. اضغط على أيقونة المتصفح\n3. اكتب: https://mohamedtarrek.github.io/wallet5/');
             return;
         }
 
-        // سطح المكتب أو داخل Phantom App
-        if (window.solana && window.solana.isPhantom) {
-            provider = window.solana;
-            try {
-                connectionDetailSpan.innerText = 'جاري الاتصال...';
-                const resp = await provider.connect();
-                connectedPublicKey = resp.publicKey.toString();
-                updateUI(true, connectedPublicKey);
-                await fetchSolBalance(connectedPublicKey);
-                getNetwork();
-            } catch (err) {
-                console.error(err);
-                connectionDetailSpan.innerText = `فشل: ${err.message || 'رفض المستخدم'}`;
-                updateUI(false);
-            }
-        } else if (isMobile) {
-            openPhantomDeepLink();
-        } else {
-            notInstalledMsg.style.display = 'block';
-            connectionDetailSpan.innerText = 'ثبّت Phantom من Chrome Web Store';
-        }
-    }
+        provider = phantom;
+        setLoading();
 
-    async function disconnectWallet() {
-        if (provider?.disconnect) {
-            await provider.disconnect().catch(() => {});
-        }
-        updateUI(false);
-        connectionDetailSpan.innerText = 'تم قطع الاتصال';
-    }
-
-    async function getNetwork() {
-        if (provider) {
-            networkNameSpan.innerText = 'Mainnet Beta';
-        }
-    }
-
-    // نسخ العنوان
-    copyAddressBtn.addEventListener('click', () => {
-        const fullAddress = walletAddressSpan.getAttribute('data-full-address');
-        if (fullAddress) {
-            navigator.clipboard.writeText(fullAddress);
-            connectionDetailSpan.innerText = '📋 تم النسخ!';
-            setTimeout(() => {
-                if (connectedPublicKey) connectionDetailSpan.innerText = '✅ متصل';
-                else connectionDetailSpan.innerText = 'غير متصل';
-            }, 1500);
-        }
-    });
-
-    connectBtn.addEventListener('click', connectWallet);
-    disconnectBtn.addEventListener('click', disconnectWallet);
-
-    // التحقق من الاتصال الحالي داخل Phantom App
-    function init() {
-        checkMobileInstall();
-        
-        if (window.solana && window.solana.isPhantom) {
-            provider = window.solana;
-            notInstalledMsg.style.display = 'none';
-            mobileInstallMsg.style.display = 'none';
+        try {
+            // طلب الاتصال
+            const response = await provider.connect();
+            const address = response.publicKey.toString();
+            setConnected(address);
             
-            if (provider.isConnected && provider.publicKey) {
-                connectedPublicKey = provider.publicKey.toString();
-                updateUI(true, connectedPublicKey);
-                fetchSolBalance(connectedPublicKey);
-                getNetwork();
-            }
-            
-            // مستمع التغييرات
-            provider.on('accountChanged', (newPublicKey) => {
-                if (newPublicKey) {
-                    connectedPublicKey = newPublicKey.toString();
-                    updateUI(true, connectedPublicKey);
-                    fetchSolBalance(connectedPublicKey);
+            // مراقبة تغيير الحساب
+            provider.on('accountChanged', (newPubkey) => {
+                if (newPubkey) {
+                    setConnected(newPubkey.toString());
                 } else {
-                    updateUI(false);
+                    setDisconnected();
                 }
             });
-        } else if (!isMobile) {
-            notInstalledMsg.style.display = 'block';
+            
+            provider.on('disconnect', () => {
+                setDisconnected();
+            });
+            
+        } catch (err) {
+            console.error(err);
+            setDisconnected();
+            if (err.code === 4001) {
+                statusMsgSpan.innerText = '❌ تم رفض الاتصال';
+            } else {
+                statusMsgSpan.innerText = '❌ فشل: ' + err.message;
+            }
         }
     }
 
+    // التحقق التلقائي عند التحميل
+    async function init() {
+        const phantom = window.solana || (window.phantom?.solana);
+        if (phantom && phantom.isPhantom && phantom.isConnected && phantom.publicKey) {
+            setConnected(phantom.publicKey.toString());
+        } else {
+            setDisconnected();
+        }
+    }
+
+    connectBtn.addEventListener('click', connectWallet);
     init();
 </script>
 </body>
