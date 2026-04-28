@@ -12,24 +12,26 @@ import {
 
 import { clusterApiUrl } from "@solana/web3.js";
 
-// Phantom wallet adapter for desktop
-import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
+// Wallet Standard - handles Phantom desktop extension + mobile deep linking
+import {
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+} from "@solana/wallet-adapter-wallets";
 
-// Mobile wallet adapter for mobile dApp browsing
-import { SolanaMobileWalletAdapter } from "@solana-mobile/wallet-adapter-mobile";
+// Wallet Standard uses event emitter (t.on) pattern - compatible with 2026 wallets
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 export default function App() {
   const network = "devnet";
-
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-  // Must have at least one wallet adapter — Phantom for desktop, Mobile for in-app browsers
+  // Wallet Standard adapters - no deprecated event emitter conflicts
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
-      SolanaMobileWalletAdapter,
+      new SolflareWalletAdapter(),
     ],
     []
   );
