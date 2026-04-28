@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 
 /**
- * Phantom Wallet Hook (Stable Version)
- * - يعمل على Desktop + Mobile (Chrome)
- * - يعتمد على Wallet Standard (بدون deep link)
- * - يحل مشكلة: Phantom يفتح ويقفل
+ * Phantom Wallet Hook (Mobile + Desktop)
+ * - Desktop: window.solana
+ * - Mobile: Phantom deep link (fallback)
  */
 
 export function usePhantomWallet() {
@@ -12,36 +11,41 @@ export function usePhantomWallet() {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
-  // 🔍 Detect mobile
+  // 📱 Detect mobile
   const isMobile =
     typeof navigator !== "undefined" &&
     /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
-  // 🔥 Restore session بعد الرجوع من Phantom
+  // 🔍 Check if Phantom exists (desktop only)
+  const isPhantomInstalled =
+    typeof window !== "undefined" && window.solana?.isPhantom;
+
+  // 🔥 Restore session after returning from Phantom
   useEffect(() => {
     const checkConnection = async () => {
-      if (window.solana?.isPhantom) {
-        try {
-          if (window.solana.isConnected) {
-            const key = window.solana.publicKey?.toString();
-            if (key) {
-              setPublicKey(key);
-              setConnected(true);
-              console.log("✅ Restored session:", key);
-            }
+      try {
+        if (window.solana?.isPhantom && window.solana.isConnected) {
+          const key = window.solana.publicKey?.toString();
+
+          if (key) {
+            setPublicKey(key);
+            setConnected(true);
+            console.log("✅ Restored session:", key);
           }
-        } catch (err) {
-          console.error("Restore error:", err);
+        } else {
+          console.log("ℹ️ No active session");
         }
+      } catch (err) {
+        console.error("❌ Restore error:", err);
       }
     };
 
     checkConnection();
   }, []);
 
-  // 🎧 Listen للأحداث
+  // 🎧 Listen to events (desktop only)
   useEffect(() => {
-    if (!window.solana) return;
+    if (!window.solana?.on) return;
 
     const handleConnect = () => {
       const key = window.solana.publicKey?.toString();
@@ -65,21 +69,45 @@ export function usePhantomWallet() {
     };
   }, []);
 
-  // 🔗 Connect (Mobile + Desktop)
-  const connect = useCallback(async () => {
-    if (connecting) return;
+  // 📱 Mobile deep link
+  const openPhantomMobile = () => {
+    const url = window.location.href;
 
-    if (!window.solana?.isPhantom) {
-      alert("❌ Phantom wallet not found. Install it first.");
+    const deepLink =
+      `https://phantom.app/ul/v1/connect?app_url=${encodeURIComponent(
+        url
+      )}&redirect_link=${encodeURIComponent(url)}`;
+
+    console.log("📱 Opening Phantom:", deepLink);
+
+    window.location.href = deepLink;
+  };
+
+  // 🔗 Connect
+  const connect = useCallback(async () => {
+    if (connecting) {
+      console.log("⛔ Already connecting...");
       return;
     }
 
     try {
-      console.log("🚀 Connecting...");
-
       setConnecting(true);
 
-      // 🔥 أهم سطر (يحل مشكلة الموبايل)
+      // 📱 Mobile (no window.solana)
+      if (isMobile && !window.solana) {
+        console.log("📱 Mobile detected → using deep link");
+        openPhantomMobile();
+        return;
+      }
+
+      // 💻 Desktop
+      if (!window.solana?.isPhantom) {
+        alert("❌ Phantom extension not found. Install it first.");
+        return;
+      }
+
+      console.log("🚀 Connecting via extension...");
+
       const resp = await window.solana.connect();
 
       const key = resp.publicKey.toString();
@@ -97,7 +125,7 @@ export function usePhantomWallet() {
     } finally {
       setConnecting(false);
     }
-  }, [connecting]);
+  }, [connecting, isMobile]);
 
   // 🔌 Disconnect
   const disconnect = useCallback(async () => {
@@ -105,6 +133,7 @@ export function usePhantomWallet() {
       await window.solana?.disconnect();
       setConnected(false);
       setPublicKey(null);
+      console.log("🔴 Disconnected");
     } catch (err) {
       console.error("Disconnect error:", err);
     }
@@ -115,6 +144,7 @@ export function usePhantomWallet() {
     connected,
     connecting,
     isMobile,
+    isPhantomInstalled,
     connect,
     disconnect,
   };
