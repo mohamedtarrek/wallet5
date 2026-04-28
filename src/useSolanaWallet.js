@@ -7,7 +7,7 @@ const STORAGE_KEY = "wallet_public_key";
  * Solana Wallet Hook (Mobile + Desktop)
  * - Mobile: transact from @solana-mobile/mobile-wallet-adapter-protocol
  * - Desktop: window.solana (Wallet Standard)
- * - Persists state via localStorage for mobile redirect recovery
+ * - Verifies real Phantom connection before trusting localStorage
  */
 export function useSolanaWallet() {
   const [publicKey, setPublicKey] = useState(null);
@@ -18,62 +18,57 @@ export function useSolanaWallet() {
     typeof navigator !== "undefined" &&
     /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 
-  // Restore session on app load (handles mobile redirect + desktop reload)
+  // Restore session on app load
   useEffect(() => {
-    const restoreSession = async () => {
-      try {
-        // 1. Try desktop Phantom first
-        if (window.solana?.isPhantom && window.solana.isConnected) {
-          const key = window.solana.publicKey?.toString();
-          if (key) {
+    const verifyAndRestore = async () => {
+      console.log("[WALLET] Verifying connection state...");
+
+      // STEP 1: Check REAL Phantom connection (highest priority)
+      if (window.solana?.isPhantom) {
+        console.log("[WALLET] Phantom detected, checking connection status...");
+
+        if (window.solana.isConnected && window.solana.publicKey) {
+          const key = window.solana.publicKey.toString();
+
+          if (key && key !== "null" && key !== "undefined") {
+            console.log("[WALLET] ✅ REAL WALLET CONNECTED:", key);
             setPublicKey(key);
             setConnected(true);
-            console.log("[WALLET] Desktop session restored:", key);
+            localStorage.setItem(STORAGE_KEY, key);
+            console.log("[WALLET] ✅ RESTORED FROM PHANTOM");
             return;
+          } else {
+            console.log("[WALLET] Phantom connected but no publicKey yet");
           }
+        } else {
+          console.log("[WALLET] Phantom not connected or no publicKey");
         }
+      } else {
+        console.log("[WALLET] Phantom not installed");
+      }
 
-        // 2. Fallback: check localStorage (mobile redirect recovery)
-        const storedKey = localStorage.getItem(STORAGE_KEY);
-        if (storedKey) {
+      // STEP 2: Fallback to localStorage (only if Phantom not connected)
+      const storedKey = localStorage.getItem(STORAGE_KEY);
+
+      if (storedKey) {
+        console.log("[WALLET] Checking localStorage fallback...");
+
+        // Verify stored key is valid
+        if (storedKey && storedKey !== "null" && storedKey !== "undefined" && storedKey.length > 30) {
+          console.log("[WALLET] 📦 RESTORED FROM STORAGE:", storedKey);
           setPublicKey(storedKey);
           setConnected(true);
-          console.log("[WALLET] Mobile session restored from storage:", storedKey);
+        } else {
+          console.log("[WALLET] Invalid stored key, clearing...");
+          localStorage.removeItem(STORAGE_KEY);
         }
-      } catch (err) {
-        console.error("[WALLET] Restore error:", err);
+      } else {
+        console.log("[WALLET] No stored session found");
       }
     };
 
-    restoreSession();
-  }, []);
-
-  // Listen to desktop connection events
-  useEffect(() => {
-    if (!window.solana?.on) return;
-
-    const handleConnect = () => {
-      const key = window.solana.publicKey?.toString();
-      console.log("[WALLET] Desktop connected:", key);
-      setPublicKey(key);
-      setConnected(true);
-      localStorage.setItem(STORAGE_KEY, key);
-    };
-
-    const handleDisconnect = () => {
-      console.log("[WALLET] Desktop disconnected");
-      localStorage.removeItem(STORAGE_KEY);
-      setPublicKey(null);
-      setConnected(false);
-    };
-
-    window.solana.on("connect", handleConnect);
-    window.solana.on("disconnect", handleDisconnect);
-
-    return () => {
-      window.solana.off("connect", handleConnect);
-      window.solana.off("disconnect", handleDisconnect);
-    };
+    // Small delay to ensure Phantom is fully initialized
+    setTimeout(verifyAndRestore, 100);
   }, []);
 
   // Persist helper
@@ -81,6 +76,7 @@ export function useSolanaWallet() {
     localStorage.setItem(STORAGE_KEY, key);
     setPublicKey(key);
     setConnected(true);
+    console.log("[WALLET] Persisted:", key);
   }, []);
 
   const clearKey = useCallback(() => {
@@ -111,9 +107,8 @@ export function useSolanaWallet() {
 
         const publicKeyStr = accounts[0].address.toString();
 
-        console.log("[WALLET] Mobile authorized:", publicKeyStr);
+        console.log("[WALLET] ✅ MOBILE AUTHORIZED:", publicKeyStr);
 
-        // Persist for redirect recovery
         persistKey(publicKeyStr);
       });
     } catch (err) {
@@ -140,11 +135,11 @@ export function useSolanaWallet() {
       const resp = await window.solana.connect();
       const key = resp.publicKey.toString();
 
-      // Desktop persists via event listener above
       setPublicKey(key);
       setConnected(true);
+      localStorage.setItem(STORAGE_KEY, key);
 
-      console.log("[WALLET] Desktop connected:", key);
+      console.log("[WALLET] ✅ DESKTOP CONNECTED:", key);
     } catch (err) {
       console.error("[WALLET] Desktop error:", err);
       throw err;
