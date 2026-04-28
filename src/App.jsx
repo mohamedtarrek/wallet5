@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { usePhantomWallet } from "./usePhantomWallet";
+import { useSolanaWallet } from "./useSolanaWallet";
 
 export default function App() {
   const {
@@ -9,41 +9,15 @@ export default function App() {
     isMobile,
     connect,
     disconnect,
-  } = usePhantomWallet();
-
-  // 🔥 Debug logger
-  const log = (msg, data) => {
-    console.log("[WALLET DEBUG]:", msg, data || "");
-  };
+  } = useSolanaWallet();
 
   useEffect(() => {
-    log("APP LOADED");
-
-    if (window.solana) {
-      log("PHANTOM DETECTED");
-      log("IS CONNECTED:", window.solana.isConnected);
-    } else {
-      log("PHANTOM NOT FOUND");
-    }
-  }, []);
-
-  const handleConnect = async () => {
-    if (connecting) {
-      log("BLOCKED: already connecting");
-      return;
-    }
-
-    try {
-      log("CONNECT BUTTON CLICKED");
-      log("IS MOBILE:", isMobile);
-
-      await connect();
-
-      log("CONNECT FUNCTION FINISHED");
-    } catch (err) {
-      log("CONNECT ERROR", err);
-    }
-  };
+    console.log("[APP] Loaded", {
+      connected,
+      publicKey: publicKey ? `${publicKey.slice(0, 4)}...` : null,
+      isMobile,
+    });
+  }, [connected, publicKey, isMobile]);
 
   const truncatedKey = publicKey
     ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}`
@@ -62,20 +36,10 @@ export default function App() {
         fontFamily: "system-ui, sans-serif",
       }}
     >
-      <h1 style={{ fontSize: "2.5rem", marginBottom: "2rem" }}>
-        SOL Store
-      </h1>
+      <h1 style={{ fontSize: "2.5rem", marginBottom: "2rem" }}>SOL Store</h1>
 
-      {/* ✅ Connected UI */}
       {connected && publicKey ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "1rem",
-          }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
           <div
             style={{
               padding: "0.75rem 1.5rem",
@@ -86,12 +50,8 @@ export default function App() {
           >
             {truncatedKey}
           </div>
-
           <button
-            onClick={() => {
-              log("DISCONNECT CLICKED");
-              disconnect();
-            }}
+            onClick={disconnect}
             style={{
               padding: "0.75rem 1.5rem",
               background: "#e53935",
@@ -106,9 +66,8 @@ export default function App() {
           </button>
         </div>
       ) : (
-        /* ❌ Not connected */
         <button
-          onClick={handleConnect}
+          onClick={connect}
           disabled={connecting}
           style={{
             padding: "1rem 2rem",
@@ -118,53 +77,25 @@ export default function App() {
             color: "white",
             fontSize: "1.2rem",
             cursor: connecting ? "not-allowed" : "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
           }}
         >
-          {connecting ? (
-            <>
-              <span
-                style={{
-                  display: "inline-block",
-                  width: "20px",
-                  height: "20px",
-                  border: "2px solid white",
-                  borderTopColor: "transparent",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                }}
-              />
-              Connecting...
-            </>
-          ) : (
-            "Connect Wallet"
-          )}
+          {connecting ? "Connecting..." : "Connect Wallet"}
         </button>
       )}
 
-      {/* Device info */}
       {connected && (
         <p style={{ marginTop: "1rem", opacity: 0.7, fontSize: "0.9rem" }}>
-          {isMobile ? "Mobile" : "Desktop"} • Connected via Phantom
+          {isMobile ? "Mobile" : "Desktop"} • Connected
         </p>
       )}
 
       {!connected && (
-        <p style={{ marginTop: "2rem", opacity: 0.7, textAlign: "center" }}>
+        <p style={{ marginTop: "2rem", opacity: 0.7, textAlign: "center", maxWidth: "300px" }}>
           {isMobile
-            ? "Opens Phantom app on mobile"
-            : "Connects Phantom extension on desktop"}
+            ? "Opens Phantom app for secure connection"
+            : "Connects via Phantom extension"}
         </p>
       )}
-
-      {/* Animation */}
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
